@@ -10,7 +10,17 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public void purchaseTickets(Long accountId, TicketTypeRequest... ticketTypeRequests) throws InvalidPurchaseException {
+        if(accountId == null) {
+            throw new IllegalArgumentException("accountId cannot be null");
+        }
 
+        if(ticketTypeRequests == null) {
+            throw new IllegalArgumentException("ticketTypeRequests cannot be null");
+        }
+
+        if(ticketTypeRequests.length == 0) {
+            throw new InvalidPurchaseException("At least one ticket type request must be provided");
+        }
     }
 
 }
