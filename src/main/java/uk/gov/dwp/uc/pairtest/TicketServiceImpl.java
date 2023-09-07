@@ -1,10 +1,17 @@
 package uk.gov.dwp.uc.pairtest;
 
+import thirdparty.seatbooking.SeatReservationService;
 import uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest;
 import uk.gov.dwp.uc.pairtest.exception.InvalidPurchaseException;
 
 public class TicketServiceImpl implements TicketService {
     private final int MAX_TICKETS_PER_TRANSACTION = 20;
+
+    private final SeatReservationService seatReservationService;
+
+    public TicketServiceImpl(SeatReservationService seatReservationService) {
+        this.seatReservationService = seatReservationService;
+    }
 
     @Override
     public void purchaseTickets(Long accountId, TicketTypeRequest... ticketTypeRequests) throws InvalidPurchaseException {
@@ -33,6 +40,8 @@ public class TicketServiceImpl implements TicketService {
         if(ticketsRequest.getNumberOfChildTickets() > 0 && ticketsRequest.getNumberOfAdultTickets() == 0) {
             throw InvalidPurchaseException.TooManyChildTickets;
         }
+
+        seatReservationService.reserveSeat(accountId, ticketsRequest.getNumberOfSeats());
     }
 
     private static class TicketPurchaseRequest {
@@ -49,6 +58,8 @@ public class TicketServiceImpl implements TicketService {
                     case INFANT:
                         numberOfInfantTickets += ticketTypeRequest.getNoOfTickets();
                         break;
+                    default:
+                        throw new IllegalArgumentException("Unknown ticket type: " + ticketTypeRequest.getTicketType());
                 }
             }
         }
@@ -73,6 +84,10 @@ public class TicketServiceImpl implements TicketService {
 
         public int getTotalNumberOfTickets() {
             return numberOfAdultTickets + numberOfChildTickets + numberOfInfantTickets;
+        }
+
+        public int getNumberOfSeats() {
+            return numberOfAdultTickets + numberOfChildTickets;
         }
     }
 }
