@@ -1,16 +1,22 @@
 package uk.gov.dwp.uc.pairtest;
 
+import thirdparty.paymentgateway.TicketPaymentService;
 import thirdparty.seatbooking.SeatReservationService;
 import uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest;
 import uk.gov.dwp.uc.pairtest.exception.InvalidPurchaseException;
 
 public class TicketServiceImpl implements TicketService {
     private final int MAX_TICKETS_PER_TRANSACTION = 20;
+    private final int ADULT_TICKET_PRICE = 20;
+    private final int CHILD_TICKET_PRICE = 10;
+    private final int INFANT_TICKET_PRICE = 0;
 
     private final SeatReservationService seatReservationService;
+    private final TicketPaymentService ticketPaymentService;
 
-    public TicketServiceImpl(SeatReservationService seatReservationService) {
+    public TicketServiceImpl(SeatReservationService seatReservationService, TicketPaymentService ticketPaymentService) {
         this.seatReservationService = seatReservationService;
+        this.ticketPaymentService = ticketPaymentService;
     }
 
     @Override
@@ -41,7 +47,21 @@ public class TicketServiceImpl implements TicketService {
             throw InvalidPurchaseException.TooManyChildTickets;
         }
 
-        seatReservationService.reserveSeat(accountId, ticketsRequest.getNumberOfSeats());
+        // Ideally this would be wrapped in a transaction
+        seatReservationService.reserveSeat(accountId, getNumberOfSeats(ticketsRequest));
+        ticketPaymentService.makePayment(accountId, getTotalPrice(ticketsRequest));
+    }
+
+    private static int getNumberOfSeats(TicketPurchaseRequest ticketPurchaseRequest)
+    {
+        return ticketPurchaseRequest.getNumberOfAdultTickets() + ticketPurchaseRequest.getNumberOfChildTickets();
+    }
+
+    private int getTotalPrice(TicketPurchaseRequest ticketPurchaseRequest)
+    {
+        return (ticketPurchaseRequest.getNumberOfAdultTickets() * ADULT_TICKET_PRICE) +
+                (ticketPurchaseRequest.getNumberOfChildTickets() * CHILD_TICKET_PRICE) +
+                (ticketPurchaseRequest.getNumberOfInfantTickets() * INFANT_TICKET_PRICE);
     }
 
     private static class TicketPurchaseRequest {
@@ -84,10 +104,6 @@ public class TicketServiceImpl implements TicketService {
 
         public int getTotalNumberOfTickets() {
             return numberOfAdultTickets + numberOfChildTickets + numberOfInfantTickets;
-        }
-
-        public int getNumberOfSeats() {
-            return numberOfAdultTickets + numberOfChildTickets;
         }
     }
 }

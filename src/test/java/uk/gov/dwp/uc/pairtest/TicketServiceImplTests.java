@@ -8,6 +8,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.mockito.Mockito;
+import thirdparty.paymentgateway.TicketPaymentService;
 import thirdparty.seatbooking.SeatReservationService;
 import uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest;
 import uk.gov.dwp.uc.pairtest.exception.InvalidPurchaseException;
@@ -22,9 +23,10 @@ public class TicketServiceImplTests {
     private final Long VALID_ACCOUNT_ID = 1L;
 
     private final SeatReservationService mockedSeatReservationService = Mockito.mock(SeatReservationService.class);
+    private final TicketPaymentService mockedTicketPaymentService = Mockito.mock(TicketPaymentService.class);
 
     public TicketServiceImplTests() {
-        ticketService = new TicketServiceImpl(mockedSeatReservationService);
+        ticketService = new TicketServiceImpl(mockedSeatReservationService, mockedTicketPaymentService);
     }
 
     @Test
@@ -36,6 +38,7 @@ public class TicketServiceImplTests {
         });
 
         verifyNoMoreInteractions(mockedSeatReservationService);
+        verifyNoMoreInteractions(mockedTicketPaymentService);
     }
 
     @Test
@@ -45,6 +48,7 @@ public class TicketServiceImplTests {
         });
 
         verifyNoMoreInteractions(mockedSeatReservationService);
+        verifyNoMoreInteractions(mockedTicketPaymentService);
     }
 
     @Test
@@ -55,6 +59,7 @@ public class TicketServiceImplTests {
 
         Assertions.assertEquals(InvalidPurchaseException.NoTickets, thrownException);
         verifyNoMoreInteractions(mockedSeatReservationService);
+        verifyNoMoreInteractions(mockedTicketPaymentService);
     }
 
     private static class TooManyTicketsArgumentsProvider implements ArgumentsProvider {
@@ -94,6 +99,7 @@ public class TicketServiceImplTests {
 
         Assertions.assertEquals(InvalidPurchaseException.TooManyTickets, thrownException);
         verifyNoMoreInteractions(mockedSeatReservationService);
+        verifyNoMoreInteractions(mockedTicketPaymentService);
     }
 
     private static class TooManyInfantTicketsArgumentsProvider implements ArgumentsProvider {
@@ -125,6 +131,7 @@ public class TicketServiceImplTests {
 
         Assertions.assertEquals(InvalidPurchaseException.TooManyInfantTickets, thrownException);
         verifyNoMoreInteractions(mockedSeatReservationService);
+        verifyNoMoreInteractions(mockedTicketPaymentService);
     }
 
     private static class TooManyChildTicketsArgumentsProvider implements ArgumentsProvider {
@@ -151,6 +158,7 @@ public class TicketServiceImplTests {
 
         Assertions.assertEquals(InvalidPurchaseException.TooManyChildTickets, thrownException);
         verifyNoMoreInteractions(mockedSeatReservationService);
+        verifyNoMoreInteractions(mockedTicketPaymentService);
     }
 
     private static class SeatsReservationArgumentsProvider implements ArgumentsProvider {
@@ -195,5 +203,60 @@ public class TicketServiceImplTests {
         Mockito.verify(mockedSeatReservationService, Mockito.times(1))
                 .reserveSeat(VALID_ACCOUNT_ID, expectedNumberOfSeatsToReserve);
         verifyNoMoreInteractions(mockedSeatReservationService);
+    }
+
+    private static class PaymentArgumentsProvider implements ArgumentsProvider {
+        @Override
+        public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
+            return Stream.of(
+                    Arguments.of(
+                            (Object) new TicketTypeRequest[]{
+                                    new TicketTypeRequest(TicketTypeRequest.Type.ADULT, 1)
+                            },
+                            20),
+                    Arguments.of(
+                            (Object) new TicketTypeRequest[]{
+                                    new TicketTypeRequest(TicketTypeRequest.Type.ADULT, 1),
+                                    new TicketTypeRequest(TicketTypeRequest.Type.CHILD, 1)
+                            },
+                            30),
+                    Arguments.of(
+                            (Object) new TicketTypeRequest[]{
+                                    new TicketTypeRequest(TicketTypeRequest.Type.ADULT, 1),
+                                    new TicketTypeRequest(TicketTypeRequest.Type.CHILD, 1),
+                                    new TicketTypeRequest(TicketTypeRequest.Type.INFANT, 1)
+                            },
+                            30),
+                    Arguments.of(
+                            (Object) new TicketTypeRequest[]{
+                                    new TicketTypeRequest(TicketTypeRequest.Type.ADULT, 1),
+                                    new TicketTypeRequest(TicketTypeRequest.Type.INFANT, 1)
+                            },
+                            20),
+                    Arguments.of(
+                            (Object) new TicketTypeRequest[]{
+                                    new TicketTypeRequest(TicketTypeRequest.Type.ADULT, 20)
+                            },
+                            400),
+                    Arguments.of(
+                            (Object) new TicketTypeRequest[]{
+                                    new TicketTypeRequest(TicketTypeRequest.Type.ADULT, 10),
+                                    new TicketTypeRequest(TicketTypeRequest.Type.CHILD, 10)
+                            },
+                            300)
+            );
+        }
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(PaymentArgumentsProvider.class)
+    public void purchaseTickets_WhenCalledWithValidTicketTypeRequests_ChargesTheCorrectAmount(
+            TicketTypeRequest[] ticketTypeRequests,
+            int expectedAmountToCharge) {
+        ticketService.purchaseTickets(VALID_ACCOUNT_ID, ticketTypeRequests);
+
+        Mockito.verify(mockedTicketPaymentService, Mockito.times(1))
+                .makePayment(VALID_ACCOUNT_ID, expectedAmountToCharge);
+        verifyNoMoreInteractions(mockedTicketPaymentService);
     }
 }
