@@ -30,26 +30,29 @@ public class TicketServiceImpl implements TicketService {
         }
 
         var ticketsRequest = new TicketPurchaseRequest(ticketTypeRequests);
-
-        if(ticketsRequest.getTotalNumberOfTickets() == 0) {
-            throw InvalidPurchaseException.NoTickets;
-        }
-
-        if(ticketsRequest.getTotalNumberOfTickets() > MAX_TICKETS_PER_TRANSACTION) {
-            throw InvalidPurchaseException.TooManyTickets;
-        }
-
-        if(ticketsRequest.getNumberOfInfantTickets() > ticketsRequest.getNumberOfAdultTickets()) {
-            throw InvalidPurchaseException.TooManyInfantTickets;
-        }
-
-        if(ticketsRequest.getNumberOfChildTickets() > 0 && ticketsRequest.getNumberOfAdultTickets() == 0) {
-            throw InvalidPurchaseException.TooManyChildTickets;
-        }
+        validateTicketPurchaseRequest(ticketsRequest);
 
         // Ideally this would be wrapped in a transaction
         seatReservationService.reserveSeat(accountId, getNumberOfSeats(ticketsRequest));
         ticketPaymentService.makePayment(accountId, getTotalPrice(ticketsRequest));
+    }
+
+    private void validateTicketPurchaseRequest(TicketPurchaseRequest ticketPurchaseRequest) throws InvalidPurchaseException {
+        if(ticketPurchaseRequest.getTotalNumberOfTickets() == 0) {
+            throw InvalidPurchaseException.NoTickets;
+        }
+
+        if(ticketPurchaseRequest.getTotalNumberOfTickets() > MAX_TICKETS_PER_TRANSACTION) {
+            throw InvalidPurchaseException.TooManyTickets;
+        }
+
+        if(ticketPurchaseRequest.getNumberOfInfantTickets() > ticketPurchaseRequest.getNumberOfAdultTickets()) {
+            throw InvalidPurchaseException.TooManyInfantTickets;
+        }
+
+        if(ticketPurchaseRequest.getNumberOfChildTickets() > 0 && ticketPurchaseRequest.getNumberOfAdultTickets() == 0) {
+            throw InvalidPurchaseException.TooManyChildTickets;
+        }
     }
 
     private static int getNumberOfSeats(TicketPurchaseRequest ticketPurchaseRequest)

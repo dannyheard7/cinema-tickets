@@ -33,9 +33,7 @@ public class TicketServiceImplTests {
     public void purchaseTickets_WhenCalledWithNullAccountId_ThrowsIllegalArgumentException() {
         var ticketTypeRequests = new TicketTypeRequest(TicketTypeRequest.Type.ADULT, 1);
 
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            ticketService.purchaseTickets(null, ticketTypeRequests);
-        });
+        Assertions.assertThrows(IllegalArgumentException.class, () -> ticketService.purchaseTickets(null, ticketTypeRequests));
 
         verifyNoMoreInteractions(mockedSeatReservationService);
         verifyNoMoreInteractions(mockedTicketPaymentService);
@@ -43,9 +41,7 @@ public class TicketServiceImplTests {
 
     @Test
     public void purchaseTickets_WhenCalledWithNullTicketTypeRequests_ThrowsIllegalArgumentException() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            ticketService.purchaseTickets(VALID_ACCOUNT_ID, null);
-        });
+        Assertions.assertThrows(IllegalArgumentException.class, () -> ticketService.purchaseTickets(VALID_ACCOUNT_ID, null));
 
         verifyNoMoreInteractions(mockedSeatReservationService);
         verifyNoMoreInteractions(mockedTicketPaymentService);
@@ -53,9 +49,7 @@ public class TicketServiceImplTests {
 
     @Test
     public void purchaseTickets_WheCalledWithNoTicketTypeRequests_ThrowsInvalidPurchaseException() {
-        var thrownException = Assertions.assertThrows(InvalidPurchaseException.class, () -> {
-            ticketService.purchaseTickets(VALID_ACCOUNT_ID);
-        });
+        var thrownException = Assertions.assertThrows(InvalidPurchaseException.class, () -> ticketService.purchaseTickets(VALID_ACCOUNT_ID));
 
         Assertions.assertEquals(InvalidPurchaseException.NoTickets, thrownException);
         verifyNoMoreInteractions(mockedSeatReservationService);
@@ -93,9 +87,7 @@ public class TicketServiceImplTests {
     @ParameterizedTest
     @ArgumentsSource(TooManyTicketsArgumentsProvider.class)
     public void purchaseTickets_WhenCalledWithTooManyTickets_ThrowsInvalidPurchaseException(TicketTypeRequest[] ticketTypeRequests) {
-        var thrownException = Assertions.assertThrows(InvalidPurchaseException.class, () -> {
-            ticketService.purchaseTickets(VALID_ACCOUNT_ID, ticketTypeRequests);
-        });
+        var thrownException = Assertions.assertThrows(InvalidPurchaseException.class, () -> ticketService.purchaseTickets(VALID_ACCOUNT_ID, ticketTypeRequests));
 
         Assertions.assertEquals(InvalidPurchaseException.TooManyTickets, thrownException);
         verifyNoMoreInteractions(mockedSeatReservationService);
@@ -125,9 +117,7 @@ public class TicketServiceImplTests {
     @ParameterizedTest
     @ArgumentsSource(TooManyInfantTicketsArgumentsProvider.class)
     public void purchaseTickets_WhenCalledWithMoreInfantsThanAdults_ThrowsInvalidPurchaseException(TicketTypeRequest[] ticketTypeRequests) {
-        var thrownException = Assertions.assertThrows(InvalidPurchaseException.class, () -> {
-            ticketService.purchaseTickets(VALID_ACCOUNT_ID, ticketTypeRequests);
-        });
+        var thrownException = Assertions.assertThrows(InvalidPurchaseException.class, () -> ticketService.purchaseTickets(VALID_ACCOUNT_ID, ticketTypeRequests));
 
         Assertions.assertEquals(InvalidPurchaseException.TooManyInfantTickets, thrownException);
         verifyNoMoreInteractions(mockedSeatReservationService);
@@ -152,9 +142,7 @@ public class TicketServiceImplTests {
     @ParameterizedTest
     @ArgumentsSource(TooManyChildTicketsArgumentsProvider.class)
     public void purchaseTickets_WhenCalledWithChildTicketsWithoutAdultTickets_ThrowsInvalidPurchaseException(TicketTypeRequest[] ticketTypeRequests) {
-        var thrownException = Assertions.assertThrows(InvalidPurchaseException.class, () -> {
-            ticketService.purchaseTickets(VALID_ACCOUNT_ID, ticketTypeRequests);
-        });
+        var thrownException = Assertions.assertThrows(InvalidPurchaseException.class, () -> ticketService.purchaseTickets(VALID_ACCOUNT_ID, ticketTypeRequests));
 
         Assertions.assertEquals(InvalidPurchaseException.TooManyChildTickets, thrownException);
         verifyNoMoreInteractions(mockedSeatReservationService);
