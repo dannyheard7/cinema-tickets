@@ -161,6 +161,12 @@ public class TicketServiceImplTests {
                     Arguments.of(
                             (Object) new TicketTypeRequest[]{
                                     new TicketTypeRequest(TicketTypeRequest.Type.ADULT, 1),
+                                    new TicketTypeRequest(TicketTypeRequest.Type.ADULT, 1)
+                            },
+                            2),
+                    Arguments.of(
+                            (Object) new TicketTypeRequest[]{
+                                    new TicketTypeRequest(TicketTypeRequest.Type.ADULT, 1),
                                     new TicketTypeRequest(TicketTypeRequest.Type.CHILD, 1)
                             },
                             2),
@@ -202,6 +208,12 @@ public class TicketServiceImplTests {
                                     new TicketTypeRequest(TicketTypeRequest.Type.ADULT, 1)
                             },
                             20),
+                    Arguments.of(
+                            (Object) new TicketTypeRequest[]{
+                                    new TicketTypeRequest(TicketTypeRequest.Type.ADULT, 1),
+                                    new TicketTypeRequest(TicketTypeRequest.Type.ADULT, 1)
+                            },
+                            40),
                     Arguments.of(
                             (Object) new TicketTypeRequest[]{
                                     new TicketTypeRequest(TicketTypeRequest.Type.ADULT, 1),
