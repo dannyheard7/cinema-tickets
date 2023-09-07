@@ -68,7 +68,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     private static class TicketPurchaseRequest {
-        public TicketPurchaseRequest(TicketTypeRequest[] ticketTypeRequests) {
+        public TicketPurchaseRequest(TicketTypeRequest[] ticketTypeRequests) throws InvalidPurchaseException {
             for (TicketTypeRequest ticketTypeRequest : ticketTypeRequests) {
                 switch (ticketTypeRequest.getTicketType())
                 {
@@ -82,7 +82,7 @@ public class TicketServiceImpl implements TicketService {
                         numberOfInfantTickets += ticketTypeRequest.getNoOfTickets();
                         break;
                     default:
-                        throw new IllegalArgumentException("Unknown ticket type: " + ticketTypeRequest.getTicketType());
+                        throw new InvalidPurchaseException("Unknown ticket type: " + ticketTypeRequest.getTicketType());
                 }
             }
         }
