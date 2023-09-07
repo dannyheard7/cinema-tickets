@@ -3,13 +3,7 @@ package uk.gov.dwp.uc.pairtest;
 import uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest;
 import uk.gov.dwp.uc.pairtest.exception.InvalidPurchaseException;
 
-import java.util.Arrays;
-
 public class TicketServiceImpl implements TicketService {
-    /**
-     * Should only have private methods other than the one below.
-     */
-
     private final int MAX_TICKETS_PER_TRANSACTION = 20;
 
     @Override
@@ -22,53 +16,63 @@ public class TicketServiceImpl implements TicketService {
             throw new IllegalArgumentException("ticketTypeRequests cannot be null");
         }
 
-        if(ticketTypeRequests.length == 0) {
+        var ticketsRequest = new TicketPurchaseRequest(ticketTypeRequests);
+
+        if(ticketsRequest.getTotalNumberOfTickets() == 0) {
             throw InvalidPurchaseException.NoTickets;
         }
 
-        if(getTotalNumberOfTickets(ticketTypeRequests) > MAX_TICKETS_PER_TRANSACTION) {
+        if(ticketsRequest.getTotalNumberOfTickets() > MAX_TICKETS_PER_TRANSACTION) {
             throw InvalidPurchaseException.TooManyTickets;
         }
 
-        var totalNumberOfAdultTickets = getTotalNumberOfAdultTickets(ticketTypeRequests);
-        var totalNumberOfChildTickets = getTotalNumberOfChildTickets(ticketTypeRequests);
-        var totalNumberOfInfantTickets = getTotalNumberOfInfantTickets(ticketTypeRequests);
-
-        if(totalNumberOfInfantTickets > totalNumberOfAdultTickets) {
+        if(ticketsRequest.getNumberOfInfantTickets() > ticketsRequest.getNumberOfAdultTickets()) {
             throw InvalidPurchaseException.TooManyInfantTickets;
         }
 
-        if(totalNumberOfChildTickets > 0 && totalNumberOfAdultTickets == 0) {
+        if(ticketsRequest.getNumberOfChildTickets() > 0 && ticketsRequest.getNumberOfAdultTickets() == 0) {
             throw InvalidPurchaseException.TooManyChildTickets;
         }
     }
 
+    private static class TicketPurchaseRequest {
+        public TicketPurchaseRequest(TicketTypeRequest[] ticketTypeRequests) {
+            for (TicketTypeRequest ticketTypeRequest : ticketTypeRequests) {
+                switch (ticketTypeRequest.getTicketType())
+                {
+                    case ADULT:
+                        numberOfAdultTickets += ticketTypeRequest.getNoOfTickets();
+                        break;
+                    case CHILD:
+                        numberOfChildTickets += ticketTypeRequest.getNoOfTickets();
+                        break;
+                    case INFANT:
+                        numberOfInfantTickets += ticketTypeRequest.getNoOfTickets();
+                        break;
+                }
+            }
+        }
 
-    // TODO: merge into a single method to reduce the number of iterations over the array
-    private int getTotalNumberOfTickets(TicketTypeRequest[] ticketTypeRequests) {
-        return Arrays.stream(ticketTypeRequests)
-                .mapToInt(TicketTypeRequest::getNoOfTickets)
-                .sum();
-    }
+        private int numberOfAdultTickets;
 
-    private int getTotalNumberOfAdultTickets(TicketTypeRequest[] ticketTypeRequests) {
-        return Arrays.stream(ticketTypeRequests)
-                .filter(ticketTypeRequest -> ticketTypeRequest.getTicketType() == TicketTypeRequest.Type.ADULT)
-                .mapToInt(TicketTypeRequest::getNoOfTickets)
-                .sum();
-    }
+        private int numberOfChildTickets;
 
-    private int getTotalNumberOfChildTickets(TicketTypeRequest[] ticketTypeRequests) {
-        return Arrays.stream(ticketTypeRequests)
-                .filter(ticketTypeRequest -> ticketTypeRequest.getTicketType() == TicketTypeRequest.Type.CHILD)
-                .mapToInt(TicketTypeRequest::getNoOfTickets)
-                .sum();
-    }
+        private int numberOfInfantTickets;
 
-    private int getTotalNumberOfInfantTickets(TicketTypeRequest[] ticketTypeRequests) {
-        return Arrays.stream(ticketTypeRequests)
-                .filter(ticketTypeRequest -> ticketTypeRequest.getTicketType() == TicketTypeRequest.Type.INFANT)
-                .mapToInt(TicketTypeRequest::getNoOfTickets)
-                .sum();
+        public int getNumberOfAdultTickets() {
+            return numberOfAdultTickets;
+        }
+
+        public int getNumberOfChildTickets() {
+            return numberOfChildTickets;
+        }
+
+        public int getNumberOfInfantTickets() {
+            return numberOfInfantTickets;
+        }
+
+        public int getTotalNumberOfTickets() {
+            return numberOfAdultTickets + numberOfChildTickets + numberOfInfantTickets;
+        }
     }
 }
